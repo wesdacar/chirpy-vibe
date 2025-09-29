@@ -11,7 +11,7 @@
   "lint": "eslint .",
   "preview": "npm run build && vite preview",
 
-  "deploy": "CI=true bun x wrangler deploy --config wrangler.jsonc --no-interactive --log-level debug",
+  "deploy": "CI=true bun x wrangler deploy --no-interactive --log-level=debug",
   "deploy:old": "bun --env-file .prod.vars scripts/deploy.ts",
 
   "routes:list": "npx wrangler routes --zone chirpycode.com",
