@@ -120,12 +120,13 @@
   // ❌ Remove custom-domain routes to avoid API error code 10002
   "routes": [],
 
-  "vars": {
+"vars": {
   "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/vibesdk-templates",
   "ALLOWED_EMAIL": "wesdacar@gmail.com",
   "DISPATCH_NAMESPACE": "vibesdk-default-namespace",
   "ENABLE_READ_REPLICAS": "false",
   "CLOUDFLARE_AI_GATEWAY": "vibesdk-gateway",
+  "CUSTOM_DOMAIN": "chirpy-vibe.wesdacar.workers.dev",
   "MAX_SANDBOX_INSTANCES": "10",
   "SANDBOX_INSTANCE_TYPE": "standard"
 },
