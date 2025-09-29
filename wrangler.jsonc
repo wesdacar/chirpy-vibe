@@ -5,6 +5,7 @@
 {
   // "$schema": "node_modules/wrangler/config-schema.json",
   "name": "chirpy-vibe",
+  "account_id": "e506824003e8e98119f21acf9003330e",
   "main": "worker/index.ts",
   "compatibility_date": "2025-08-10",
   "compatibility_flags": ["nodejs_compat"],
