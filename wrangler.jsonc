@@ -126,7 +126,7 @@
   "DISPATCH_NAMESPACE": "vibesdk-default-namespace",
   "ENABLE_READ_REPLICAS": "false",
   "CLOUDFLARE_AI_GATEWAY": "vibesdk-gateway",
-  "CUSTOM_DOMAIN": "chirpy-vibe.wesdacar.workers.dev",
+  "CUSTOM_DOMAIN": "chirpycode.com",
   "MAX_SANDBOX_INSTANCES": "10",
   "SANDBOX_INSTANCE_TYPE": "standard"
 },
