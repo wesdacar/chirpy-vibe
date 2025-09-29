@@ -11,11 +11,9 @@
   "lint": "eslint .",
   "preview": "npm run build && vite preview",
 
-  // --- deployment (use Wrangler directly) ---
   "deploy": "npx wrangler deploy --config wrangler.jsonc",
   "deploy:old": "bun --env-file .prod.vars scripts/deploy.ts",
 
-  // optional helpers
   "routes:list": "npx wrangler routes --zone chirpycode.com",
   "routes:add": "npx wrangler routes add chirpycode.com/*",
 
