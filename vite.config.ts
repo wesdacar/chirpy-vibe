@@ -28,24 +28,14 @@ export default defineConfig({
         plugins: [
                 react(),
                 svgr(),
-                cloudflare({
-                        configPath: 'wrangler.jsonc',
-                        experimental: { remoteBindings: true },
-                }), // Add the node polyfills plugin here
-                // nodePolyfills({
-                //     exclude: [
-                //       'tty', // Exclude 'tty' module
-                //     ],
-                //     // We recommend leaving this as `true` to polyfill `global`.
-                //     globals: {
-                //         global: true,
-                //     },
-                // })
+                // Conditionally load Cloudflare plugin only when not in Replit
+                ...(process.env.REPL_ID ? [] : [
+                        cloudflare({
+                                configPath: 'wrangler.jsonc',
+                                experimental: { remoteBindings: true },
+                        })
+                ]),
                 tailwindcss(),
-                // sentryVitePlugin({
-                //      org: 'cloudflare-0u',
-                //      project: 'javascript-react',
-                // }),
         ],
 
         resolve: {
@@ -80,6 +70,9 @@ export default defineConfig({
                 host: '0.0.0.0',
                 port: 5000,
                 allowedHosts: true,
+                watch: {
+                        ignored: ['**/node_modules/**', '**/.cache/**', '**/dist/**']
+                }
         },
 
         // Clear cache more aggressively
