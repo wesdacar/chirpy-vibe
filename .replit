@@ -40,3 +40,8 @@ externalPort = 3000
 [[ports]]
 localPort = 42027
 externalPort = 3001
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bun", "x", "wrangler", "deploy"]
+build = ["bun", "run", "build"]
