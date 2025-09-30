@@ -1,14 +1,12 @@
 import { WebSocket } from 'partysocket';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    RateLimitExceededError,
+	RateLimitExceededError,
 	type BlueprintType,
 	type WebSocketMessage,
-	type CodeFixEdits} from '@/api-types';
-import {
-	createRepairingJSONParser,
-	ndjsonStream,
-} from '@/utils/ndjson-parser/ndjson-parser';
+	type CodeFixEdits
+} from '@/api-types';
+import { ndjsonStream } from '@/utils/ndjson-parser/ndjson-parser';
 import { getFileType } from '@/utils/string';
 import { logger } from '@/utils/logger';
 import { apiClient } from '@/lib/api-client';
@@ -377,7 +375,7 @@ export function useChat({
 		[maxRetries, retryCount, retryTimeouts, onDebugMessage, sendMessage],
 	);
 
-    // No legacy wrapper; call connectWithRetry directly
+	// No legacy wrapper; call connectWithRetry directly
 
 	useEffect(() => {
 		async function init() {
@@ -396,7 +394,10 @@ export function useChat({
 						agentMode,
 					});
 
-					const parser = createRepairingJSONParser();
+					// Buffer for blueprint streaming (text only; parse once at end)
+					let startedBlueprintStream = false;
+					let blueprintBuf = '';
+					let blueprintParsed = false;
 
 					const result: {
 						websocketUrl: string;
@@ -412,7 +413,6 @@ export function useChat({
 						},
 					};
 
-					let startedBlueprintStream = false;
 					sendMessage({
 						id: 'main',
 						message: "Sure, let's get started. Bootstrapping the project first...",
@@ -420,8 +420,16 @@ export function useChat({
 					});
 
 					for await (const obj of ndjsonStream(response.stream)) {
-                        logger.debug('Received chunk from server:', obj);
-						if (obj.chunk) {
+						logger.debug('Received chunk from server:', obj);
+
+						// --- Blueprint streaming (robust to old/new field names) ---
+						// Prefer new contract { blueprintChunk: string }, fallback to { chunk: string }
+						const blueprintChunk: string | undefined =
+							typeof obj?.blueprintChunk === 'string'
+								? obj.blueprintChunk
+								: (typeof obj?.chunk === 'string' ? obj.chunk : undefined);
+
+						if (blueprintChunk !== undefined) {
 							if (!startedBlueprintStream) {
 								sendMessage({
 									id: 'main',
@@ -435,23 +443,42 @@ export function useChat({
 								updateStage('bootstrap', { status: 'completed' });
 								updateStage('blueprint', { status: 'active' });
 							}
-							parser.feed(obj.chunk);
+							// Accumulate TEXT ONLY; DO NOT parse incrementally
+							blueprintBuf += blueprintChunk;
+						}
+
+						// Optional explicit server signal that blueprint is complete
+						if (obj?.blueprintDone === true && !blueprintParsed) {
 							try {
-								const partial = parser.finalize();
-								setBlueprint(partial);
+								const bp = JSON.parse(blueprintBuf) as BlueprintType;
+								setBlueprint(bp);
+								blueprintParsed = true;
 							} catch (e) {
-								logger.error('Error parsing JSON:', e, obj.chunk);
+								logger.error('❌ Failed to parse final blueprint JSON', e);
+								sendMessage({
+									id: 'blueprint_parse_error',
+									message: 'Blueprint arrived but could not be parsed. Check server output format.',
+								});
 							}
-						} 
+							updateStage('blueprint', { status: 'completed' });
+							setIsGeneratingBlueprint(false);
+							sendMessage({
+								id: 'main',
+								message: 'Blueprint generation complete. Now starting the code generation...',
+								isThinking: true,
+							});
+						}
+						// --- End blueprint handling ---
+
 						if (obj.agentId) {
 							result.agentId = obj.agentId;
 						}
 						if (obj.websocketUrl) {
 							result.websocketUrl = obj.websocketUrl;
-							logger.debug('📡 Received WebSocket URL from server:', result.websocketUrl)
+							logger.debug('📡 Received WebSocket URL from server:', result.websocketUrl);
 						}
 						if (obj.template) {
-                            logger.debug('Received template from server:', obj.template);
+							logger.debug('Received template from server:', obj.template);
 							result.template = obj.template;
 							if (obj.template.files) {
 								loadBootstrapFiles(obj.template.files);
@@ -459,14 +486,26 @@ export function useChat({
 						}
 					}
 
-					updateStage('blueprint', { status: 'completed' });
-					setIsGeneratingBlueprint(false);
-					sendMessage({
-						id: 'main',
-						message:
-							'Blueprint generation complete. Now starting the code generation...',
-						isThinking: true,
-					});
+					// If stream ended without explicit blueprintDone but we did buffer content, try to parse once now.
+					if (startedBlueprintStream && !blueprintParsed) {
+						try {
+							const bp = JSON.parse(blueprintBuf) as BlueprintType;
+							setBlueprint(bp);
+						} catch (e) {
+							logger.error('❌ Failed to parse final blueprint JSON at stream end', e);
+							sendMessage({
+								id: 'blueprint_parse_error_end',
+								message: 'Blueprint completed but parsing failed. The server may be sending non-JSON text; ensure it streams JSON text only.',
+							});
+						}
+						updateStage('blueprint', { status: 'completed' });
+						setIsGeneratingBlueprint(false);
+						sendMessage({
+							id: 'main',
+							message: 'Blueprint generation complete. Now starting the code generation...',
+							isThinking: true,
+						});
+					}
 
 					// Connect to WebSocket
 					logger.debug('connecting to ws with created id');
@@ -518,24 +557,25 @@ export function useChat({
 			}
 		}
 		init();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-    // Mount/unmount: enable/disable reconnection and clear pending retries
-    useEffect(() => {
-        shouldReconnectRef.current = true;
-        return () => {
-            shouldReconnectRef.current = false;
-            retryTimeouts.current.forEach(clearTimeout);
-            retryTimeouts.current = [];
-        };
-    }, []);
+	// Mount/unmount: enable/disable reconnection and clear pending retries
+	useEffect(() => {
+		shouldReconnectRef.current = true;
+		return () => {
+			shouldReconnectRef.current = false;
+			retryTimeouts.current.forEach(clearTimeout);
+			retryTimeouts.current = [];
+		};
+	}, []);
 
-    // Close previous websocket on change
-    useEffect(() => {
-        return () => {
-            websocket?.close();
-        };
-    }, [websocket]);
+	// Close previous websocket on change
+	useEffect(() => {
+		return () => {
+			websocket?.close();
+		};
+	}, [websocket]);
 
 	useEffect(() => {
 		if (edit) {
@@ -596,10 +636,8 @@ export function useChat({
 					}
 				}, 60000); // 1 minute = 60,000ms
 				
-				// Store timeout ID for cleanup if deployment completes early
 				// Note: In a real implementation, you'd want to clear this timeout
 				// when deployment completes successfully
-				
 			} else {
 				throw new Error('WebSocket connection not available');
 			}
@@ -658,3 +696,4 @@ export function useChat({
 		isPhaseProgressActive,
 	};
 }
+
