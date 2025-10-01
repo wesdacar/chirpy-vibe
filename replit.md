@@ -1,13 +1,19 @@
-# Cloudflare VibeSDK
+# Chirpy VibeSDK
 
 ## Overview
-Cloudflare VibeSDK is an open-source full-stack AI webapp generator platform that allows users to describe apps in natural language and have them built by AI agents. The platform uses Cloudflare's developer ecosystem including Workers, Durable Objects, D1 database, R2 storage, and containerized sandboxes.
+Chirpy (formerly Cloudflare VibeSDK) is an open-source full-stack AI webapp generator platform that allows users to describe apps in natural language and have them built by AI agents. The platform uses Cloudflare's developer ecosystem including Workers, Durable Objects, D1 database, R2 storage, and containerized sandboxes.
 
 ## Project Status
-- **Current State**: Successfully set up in Replit environment
-- **Last Updated**: September 30, 2025
+- **Current State**: Successfully set up in Replit environment with Chirpy branding
+- **Last Updated**: October 1, 2025
 
 ## Recent Changes
+- **2025-10-01**: Chirpy rebranding and deployment fixes
+  - Replaced logo with Chirpy logo
+  - Updated color scheme to purple gradient theme (#9333ea, #7c3aed, #a855f7)
+  - Fixed deployment error by switching from rolldown-vite to standard vite 6.3.6
+  - Removed conflicting package.json overrides section
+  - Verified build and dev server work with standard vite
 - **2025-09-30**: Initial Replit import setup completed
   - Installed all dependencies with Bun
   - Configured Vite dev server to run on 0.0.0.0:5000
@@ -35,7 +41,7 @@ Cloudflare VibeSDK is an open-source full-stack AI webapp generator platform tha
 
 ### Key Technologies
 - **Package Manager**: Bun
-- **Build Tool**: Vite (Rolldown)
+- **Build Tool**: Vite 6.3.6 (standard)
 - **TypeScript**: Strict mode enabled
 - **Linting**: ESLint with TypeScript support
 - **Code Generation**: AI agents using Durable Objects
