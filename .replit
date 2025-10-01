@@ -42,14 +42,14 @@ localPort = 9229
 externalPort = 3000
 
 [[ports]]
+localPort = 34813
+externalPort = 3003
+
+[[ports]]
 localPort = 42027
 externalPort = 3001
 
-[[ports]]
-localPort = 46139
-externalPort = 3003
-
 [deployment]
-deploymentTarget = "vm"
-run = ["bun", "x", "wrangler", "deploy"]
-build = ["bun", "run", "build"]
+deploymentTarget = "autoscale"
+run = ["bun", "run", "start"]
+build = ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' bun run build"]

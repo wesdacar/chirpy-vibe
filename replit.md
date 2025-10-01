@@ -13,6 +13,10 @@ Chirpy (formerly Cloudflare VibeSDK) is an open-source full-stack AI webapp gene
   - Updated color scheme to purple gradient theme (#9333ea, #7c3aed, #a855f7)
   - Fixed deployment error by switching from rolldown-vite to standard vite 6.3.6
   - Removed conflicting package.json overrides section
+  - Changed deployment type from VM to Autoscale for web application compatibility
+  - Increased Node.js memory limit to 4GB for build process (--max-old-space-size=4096)
+  - Added start script to serve built application with vite preview
+  - Updated deployment to serve the app instead of deploying to Cloudflare Workers
   - Verified build and dev server work with standard vite
 - **2025-09-30**: Initial Replit import setup completed
   - Installed all dependencies with Bun
@@ -67,10 +71,17 @@ Copy `.dev.vars.example` to `.dev.vars` and configure:
 - OAuth credentials (optional for login features)
 
 ## Deployment
-Configured for Cloudflare Workers deployment:
-- **Build**: `bun run build`
+
+### Replit Deployment (Autoscale)
+Configured for Replit's Autoscale deployment:
+- **Build**: `bun run build` with 4GB Node.js memory limit
+- **Run**: `bun run start` (serves the built app on port 5000)
+- **Target**: Autoscale (automatically scales based on traffic)
+
+### Cloudflare Workers Deployment (Manual)
+For deploying to Cloudflare infrastructure:
 - **Deploy**: `bun x wrangler deploy`
-- **Target**: VM (stateful deployment)
+- **Note**: Requires CLOUDFLARE_API_TOKEN environment variable
 
 ## File Structure
 - `/src` - Frontend React application
